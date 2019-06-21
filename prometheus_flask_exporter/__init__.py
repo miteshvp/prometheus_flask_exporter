@@ -336,6 +336,9 @@ class PrometheusMetrics(object):
                         total_count = sample[2]
                         
             average_time = float(total_time / total_count)
+            print("*********** Average Time ************)
+            print(average_time)
+            print("*************************************)
             # Gauge by default aggregates based on PID if multiprocess_mode in (all, liveall)
             gauge.labels(request.method, group, response.status_code).set(average_time)
 
