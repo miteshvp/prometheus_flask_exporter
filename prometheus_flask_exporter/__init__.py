@@ -332,13 +332,13 @@ class PrometheusMetrics(object):
                 if '_sum' in sample:
                     if request.method == sample[1]['method'] and \
                                     group == sample[1][duration_group_name] and \
-                                    os.getpid() == sample[1]['pid'] and \
-                                    hostname == sample[1]['hostname']:
+                                    str(os.getpid()) == sample[1]['pid'] and \
+                                    str(hostname) == sample[1]['hostname']:
                         total_time = sample[2]
                 if '_count' in sample:
                     if request.method == sample[1]['method'] and \
-                                    os.getpid() == sample[1]['pid'] and \
-                                    hostname == sample[1]['hostname'] and \
+                                    str(os.getpid()) == sample[1]['pid'] and \
+                                    str(hostname) == sample[1]['hostname'] and \
                                     group == sample[1][duration_group_name]:
                         total_count = sample[2]
                         
