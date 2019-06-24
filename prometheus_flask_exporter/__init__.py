@@ -331,16 +331,22 @@ class PrometheusMetrics(object):
                 """
                 if '_sum' in sample:
                     if request.method == sample[1]['method'] and \
-                                    group == sample[1][duration_group_name]:
+                                    group == sample[1][duration_group_name] and \
+                                    os.getpid() == sample[1]['pid'] and \
+                                    hostname == sample[1]['hostname']:
                         total_time = sample[2]
                 if '_count' in sample:
                     if request.method == sample[1]['method'] and \
+                                    os.getpid() == sample[1]['pid'] and \
+                                    hostname == sample[1]['hostname'] and \
                                     group == sample[1][duration_group_name]:
                         total_count = sample[2]
                         
-            average_time = float(total_time / total_count)
-            # Gauge by default aggregates based on PID if multiprocess_mode in (all, liveall)
-            gauge.labels(request.method, group, hostname, response.status_code).set(average_time)
+            if total_time > 0 and total_count > 0:
+                average_time = float(total_time / total_count)
+                # Gauge by default aggregates based on PID if multiprocess_mode in (all, liveall)
+                gauge.labels(request.method, group, hostname,
+                             response.status_code).set(average_time)
 
             return response
 
