@@ -320,6 +320,8 @@ class PrometheusMetrics(object):
             counter.labels(request.method, group, hostname, response.status_code).inc()
             
             # Get moving average data per (endpoint, method_tye, status_code, pid)
+            total_count = 1
+            total_time = 0
             for sample in histogram._samples():
                 """Data Format
                 By Path
