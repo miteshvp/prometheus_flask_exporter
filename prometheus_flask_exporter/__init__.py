@@ -265,12 +265,13 @@ class PrometheusMetrics(object):
         else:
             prefix = prefix + "_"
 
+        hostname = os.getenv('HOSTNAME', 'bayesian-api')
         # Add gauge metrics for our average calculations
         # Gauge by default considers pid for labeling for multiprocess_mode in (all, liveall).
         gauge = Gauge(
             '%shttp_request_average' % prefix,
             'Average Response Time of HTTP requests',
-            ('method', duration_group_name, 'status'),
+            ('method', duration_group_name, 'hostname', 'status'),
             registry=self.registry, multiprocess_mode='liveall'
         )
         
@@ -278,7 +279,7 @@ class PrometheusMetrics(object):
         histogram = Histogram(
             '%shttp_request_duration_seconds' % prefix,
             'Flask HTTP request duration in seconds',
-            ('method', duration_group_name, 'pid', 'status'),
+            ('method', duration_group_name, 'pid', 'hostname', 'status'),
             registry=self.registry,
             **buckets_as_kwargs
         )
@@ -287,7 +288,7 @@ class PrometheusMetrics(object):
         counter = Counter(
             '%shttp_request_total' % prefix,
             'Total number of HTTP requests',
-            ('method', duration_group_name, 'status'),
+            ('method', duration_group_name, 'hostname', 'status'),
             registry=self.registry
         )
 
@@ -313,10 +314,10 @@ class PrometheusMetrics(object):
                     group = getattr(request, duration_group)
 
                 histogram.labels(
-                    request.method, group, os.getpid(), response.status_code
+                    request.method, group, os.getpid(), hostname, response.status_code
                 ).observe(total_time)
 
-            counter.labels(request.method, group, response.status_code).inc()
+            counter.labels(request.method, group, hostname, response.status_code).inc()
             
             # Get moving average data per (endpoint, method_tye, status_code, pid)
             for sample in histogram._samples():
@@ -328,16 +329,16 @@ class PrometheusMetrics(object):
                 """
                 if '_sum' in sample:
                     if request.method == sample[1]['method'] and \
-                        group == sample[1][duration_group_name]:
+                                    group == sample[1][duration_group_name]:
                         total_time = sample[2]
                 if '_count' in sample:
                     if request.method == sample[1]['method'] and \
-                        group == sample[1][duration_group_name]:
+                                    group == sample[1][duration_group_name]:
                         total_count = sample[2]
                         
             average_time = float(total_time / total_count)
             # Gauge by default aggregates based on PID if multiprocess_mode in (all, liveall)
-            gauge.labels(request.method, group, response.status_code).set(average_time)
+            gauge.labels(request.method, group, hostname, response.status_code).set(average_time)
 
             return response
 
